@@ -1,0 +1,507 @@
+---
+title: "Cyclistic Bikeshare Analysis"
+output:
+  word_document: default
+  html_notebook: default
+  pdf_document: default
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com)   
+
+#### **1) INTRODUCTION:**
+
+* This is my capstone project for the google data analytics                  professional certificate course in coursera. 
+* Here i am given a fictional  cyclistic bikeshare company, but the data is the replica of a very similar real world comapany though the data is not accurate due to privacy policy issues.
+* I am going to follow the analysis steps which i was learned in this course. 
+* The 6 step analysis process are;
+    + Ask
+    + Prepare
+    + Process
+    + Analyse
+    + Share
+    + Act
+
+<br>
+
+#### **2) ASK:**
+    
++ **Buisness Task:**
+    - As per the financial analyst team increasing the membership riders        will be best for the future growth  of our company rather than            increasing the  casual riders 
+    - So  the main objective of this analysis is to help the maeketing team       to come up with a marketing strategy for converting the casual riders       into an annual membership riders
++ **Key stakeholders:**
+    - Cyclistic Riders
+    - Lily moreno- marketing director and manager
+    - Cyclistic marketing team
+    - Cyclistic executive team
++ **Deliverable:**
+    - My task is to identify  how the casual riders are different from           membership riders
+
+<br>
+
+#### **3) PREPARE AND PROCESS :** 
+
+I am doing the prepare and process phase of this analysis simultaneously together. Because either way as i move on ,i will overlap these two phases so to avoid any further confusions i am doing it together.
+
+* **Data source:**
+    + The data i am using in this analysis is downloaded from this [tripdata webiste](https://divvy-tripdata.s3.amazonaws.com/index.html)
+
+* **Data stored format:**
+    +  The data was stored in the csv(comma separated values) format.
+
+* **Data filtered:**
+    + I am using the last 12 months data from Jan 2022 - Dec 2022
+  
+* **Data integrity and credibility(**ROCCC**):**
+    + The data has been made available by Motivate International Inc. under       this [license](https://ride.divvybikes.com/data-license-agreement).
+    +  The data is not completely ROCCC because we are using the proxy data       for this fictional company but it is almost ROCCC, it is                   **reliable**, since it is **proxy** it is similar to **original** ,        **not comphrehensive** but it is **enough** to make our analysis, it       is **current** and it is **cited** 
+
+* **Data limitations:**
+    + This is public data that we can use to explore how different customer       types are using Cyclistic bikes. 
+    + But note that data-privacy issues prohibit us from using riders’           personally identifiable information.  
+    + so i won’t be able to connect pass purchases to credit card numbers        to determine if casual riders live in the Cyclistic service area or        if they have purchased multiple single passes.
+* **Tools used:**
+    + I am using R programming for this analysis as it is more efficient         and statistically friendly tool to do our anlaysis.
+
+##### **a) DATA ACQUISTION :**
+* Installing and loading the required packages for doing the data            cleaning,   data manipulation , data analysis and data visualization.
+
+```{r}
+install.packages("tidyverse")
+library(tidyverse)
+```
+```{r}
+library(lubridate)
+library(readr)
+library(readxl)
+library(dplyr)
+library(ggplot2)
+install.packages("janitor")
+library(janitor)
+install.packages("skimr")
+library(skimr)
+```
+
+##### **b) IMPORTING THE FILES:**
+
+* Now i  want to access the package, so i am  using the read_csv
+ function from read_r to import it we can also use the files tab in 4th     pane to import it and  in some cases we  can also use read_xl for excel    files.
+
+```{r}
+Jan_2022 = read_csv("202201-divvy-tripdata.csv")
+Feb_2022 = read_csv("202202-divvy-tripdata.csv")
+Mar_2022 = read_csv("202203-divvy-tripdata.csv")
+Apr_2022 = read_csv("202204-divvy-tripdata.csv")
+May_2022 = read_csv("202205-divvy-tripdata.csv")
+Jun_2022 = read_csv("202206-divvy-tripdata.csv")
+Jul_2022 = read_csv("202207-divvy-tripdata.csv")
+Aug_2022 = read_csv("202208-divvy-tripdata.csv")
+Sep_2022 = read_csv("202209-divvy-publictripdata.csv")
+Oct_2022 = read_csv("202210-divvy-tripdata.csv")
+Nov_2022 = read_csv("202211-divvy-tripdata.csv")
+Dec_2022 = read_csv("202212-divvy-tripdata.csv")
+```
+<br>
+
+##### **c) CHECKING THE CONSISTENCY OF THE FILES:**
+ * Now we want to combine all the files into a single dataset for             processing the data for analysis. Before combining we want  to ensure      that the data is consistent and clean .
+
+ *  Here i am using colnames() function to make sure the coulumn names are     same through all the files.
+
+```{r}
+colnames(Jan_2022) == colnames(Feb_2022)
+```
+```{r}
+colnames(Feb_2022) == colnames(Mar_2022)
+```
+```{r}
+colnames(Mar_2022) == colnames(Apr_2022)
+```
+```{r}
+colnames(Apr_2022) == colnames(May_2022)
+```
+
+```{r}
+colnames(May_2022) == colnames(Jun_2022)
+```
+```{r}
+colnames(Jun_2022) == colnames(Jul_2022)
+```
+```{r}
+colnames(Jul_2022) == colnames(Aug_2022)
+```
+
+```{r}
+colnames(Aug_2022) == colnames(Sep_2022)
+```
+```{r}
+colnames(Sep_2022) == colnames(Oct_2022)
+```
+```{r}
+colnames(Oct_2022) == colnames(Nov_2022)
+```
+```{r}
+colnames(Nov_2022) == colnames(Dec_2022)
+```
+##### **d) ENSURING THE FILES IS BINDABLE TOGETHER:**
+
+* As Column names are consistent , now we have to bind the data , as the     data elements or observations  we need to access are in rows before        binding we have to ensure or  inspect the rows data format is consistent   or not .
+
+```{r}
+compare_df_cols_same(Jan_2022,Feb_2022,Mar_2022,Apr_2022,May_2022,Jun_2022,Jul_2022,Aug_2022,Sep_2022,Oct_2022,Nov_2022,Dec_2022, bind_method = c("bind_rows","rbind"), verbose = TRUE )
+```
+##### **e) COMBINING THE MONTHLY FILES INTO ANNUAL DATA:**
+
+* As the Above result is true now we can bind the rows together .
+combining the monthly datasets into a single annual dataset
+
+```{r}
+trip_2022 = bind_rows(Jan_2022,Feb_2022,Mar_2022,Apr_2022,May_2022,Jun_2022,Jul_2022,Aug_2022,Sep_2022,Oct_2022,Nov_2022,Dec_2022)
+```
+##### **f) DATA WRANGLING AND DATA CLEANING:**
+* **structure of dataset:**
+    + Now i Have to process the data by data wrangling so to proceed with        we have to know the structure or Format of the dataset, How the data       elements are stored in it. By using he str we can get the detailed         preview of the dataset.
+
+```{r}
+str(trip_2022)
+```
+* **Formatting or transforming the data:**
+    + After going through the structure of the dataset first thing i have        to get the date, month, year, day, and day of the week in order to         make the analysis efficiently.
+
+    + Before doing that i am **dropping the null** values in dataset
+
+```{r}
+trip_2022 = drop_na(trip_2022)
+```
+
+```{r}
+trip_2022$date = as.Date(trip_2022$started_at)
+trip_2022$month = format(trip_2022$date,"%m")
+trip_2022$year = format(trip_2022$date,"%Y")
+trip_2022$day = format(trip_2022$date,"%d")
+trip_2022$day_of_week =format(trip_2022$date, "%A")
+```
+* **Viewing:**
+* To ensure that everything goes well lets view the data.
+```{r}
+View(trip_2022)
+```
+* **Calculating the ride distance and duration:**
+
+    + Now we want to calculate the **ride duration**.
+```{r}
+trip_2022$ride_duration =difftime(trip_2022$ended_at,trip_2022$started_at)
+```
+* Lets check how it is stored 
+```{r}
+str(trip_2022$ride_duration)
+```
+* To perform calculations we need to **convert into numeric**
+
+```{r}
+trip_2022$ride_duration = as.numeric(trip_2022$ride_duration)
+
+is.numeric((trip_2022$ride_duration))
+```
+
+* Now we want to calculate the  **ride distance.** 
+
+```{r}
+install.packages("geosphere")
+library(geosphere)
+```
+
+```{r}
+trip_2022$ride_distance =                                         distGeo(matrix(c(trip_2022$start_lng,trip_2022$start_lat), 
+                                       ncol = 2)  ,
+ matrix(c(trip_2022$end_lng,trip_2022$end_lat),ncol = 2))
+```
+* I often use View function to view the data  when i get  confused with      previewing the structure of the data but here i did'nt include the code    chunks
+* **Unit conversion:**
+    + Now i need to see the distance in km which was in metre
+      and duration in minutes which was in seconds
+```{r}
+trip_2022$ride_distance =trip_2022$ride_distance/1000
+trip_2022$ride_duration =trip_2022$ride_duration/60
+```
+* **Filtering the data:**
+    + Now i need to drop the rows containing ride duration and ride              distance which are <= 0.This happened because there was no data with       respect to the location(name & coordinates) and time.
+
+```{r}
+ trip_2022_clean1 = trip_2022[ !(trip_2022$ride_duration <= 0 | trip_2022$ride_distance <= 0),]  
+```
+* **Previewing:**
+    + Here i am going to view the dataset and structure of the dataset
+```{r}
+View(trip_2022_clean1)
+str(trip_2022_clean1)
+```
+#### **4) ANALYZE AND SHARE:**
+
+<br>
+
+##### **a) SUMMARY OF THE DATA:**
+
+* Now we have to analyze the processed data.
+      
+```{r}
+trip_2022_clean1 %>% 
+  group_by(member_casual) %>% 
+  summarise( average_ride_duration = mean(ride_duration),median_ride_duration = median(ride_duration),max_ride_duration = max(ride_duration), min_ride_duration = min(ride_duration) )
+```
+##### **b) Total Rides Made By Casual And Member:**
+```{r}
+trip_2022_clean1 %>% 
+  group_by(member_casual) %>% 
+  summarise(ride_count = n(),.groups = "drop")
+```
+##### * **Visualization of the total ride count of members and casual:**
+```{r}
+trip_2022_visual =trip_2022_clean1 %>% 
+  group_by(member_casual) %>% 
+  summarise(no_of_rides = n())
+```
+
+```{r}
+ggplot(data = trip_2022_visual)+
+  geom_col(mapping = aes(x =  member_casual,y = no_of_rides, fill = member_casual ),position = "dodge")+
+  labs( title= "Total No Of Rides By Casuals And Members:",caption = 
+         "Done By Arun Kumar In Jan 2023")
+```
+##### **c)  No Of Rides By Casuals And Members In Each Day Of The Week:** 
+
+    +  **Ordering  The Day Of The Week:**
+    
+```{r}
+trip_2022_clean1$day_of_week = ordered(trip_2022_clean1$day_of_week,levels = c("Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"))
+```
+
+```{r}
+trip_2022_clean1 %>% 
+  group_by(member_casual,day_of_week) %>% 
+  summarise(no_of_rides = n(),.groups = "drop") %>% 
+  arrange(member_casual,day_of_week)
+```
+##### **Visualization Of The Total Ride Count Of Members And Casual In             Each Day Of The Week:**
+```{r}
+trip_2022_visual = trip_2022_clean1 %>% 
+  group_by(member_casual,day_of_week) %>% 
+  summarise(no_of_rides = n(),.groups = "drop") %>% 
+  arrange(member_casual,day_of_week)
+ggplot(data = trip_2022_visual)+
+  geom_col(mapping = aes( x = day_of_week, y = no_of_rides, fill =  member_casual),position = "dodge")+
+  labs(title ="Total No Of Rides Vs Day Of The Week:",caption = 
+         "Done By Arun Kumar In Jan 2023")+
+  scale_y_continuous(labels = function(x) format(x,scientific = FALSE))
+  
+```
+##### **d) Total Ride Count Of Members And Casuals In Each Month:**
+```{r}
+trip_2022_clean1 %>% 
+  group_by(member_casual,month) %>% 
+  summarise(no_of_rides = n(),.groups = "drop") %>% 
+  arrange(member_casual,month)
+```
+
+##### **Visualization Of The Total Ride Count Of Members And Casual In             Each Month:**
+```{r}
+trip_2022_visual = trip_2022_clean1 %>% 
+  group_by(member_casual, month) %>% 
+  summarise(no_of_rides = n(),.groups = "drop") %>% 
+  arrange(member_casual, month)
+ggplot(data = trip_2022_visual)+
+  geom_col(mapping = aes( x = month, y = no_of_rides, fill =  member_casual),position = "dodge")+
+  labs(title = "Total No Of Rides Vs Month:",caption = 
+         "Done By Arun Kumar In Jan 2023")+
+  scale_y_continuous(labels = function(x) format(x,scientific = FALSE))
+```
+##### **e) Average Ride Duration  Of Members And Casual In Each                       Day Of The Week:**
+```{r}
+trip_2022_visual = trip_2022_clean1 %>% 
+  group_by(member_casual,day_of_week) %>% 
+  summarise(average_ride_duration = mean(ride_duration),.groups = "drop")%>% 
+  arrange(member_casual,day_of_week)
+ggplot(data = trip_2022_visual)+
+  geom_col(mapping= aes(x= day_of_week , y = average_ride_duration, fill = member_casual),position = "dodge")+
+  labs(title = "Average Ride Duration Vs Day Of The Week : ",caption = 
+         "Done By Arun Kumar In Jan 2023")+
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+```
+##### **f) Average Ride Duration  Of Members And Casual In Each                       Month:**
+```{r}
+ trip_2022_visual = trip_2022_clean1 %>% 
+  group_by(member_casual,month) %>% 
+  summarise(average_ride_duration = mean(ride_duration),.groups = "drop")%>% 
+  arrange(member_casual, month)
+ggplot(data = trip_2022_visual)+
+  geom_col(mapping= aes(x=  month , y = average_ride_duration, fill = member_casual),position = "dodge")+
+  labs(title = "Average Ride Duration Vs Month : ",caption = 
+         "Done By Arun Kumar In Jan 2023")+
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+```
+##### **g) Average Ride  distance Of Members And Casual In Each                       Month:**
+```{r}
+ trip_2022_visual = trip_2022_clean1 %>% 
+  group_by(member_casual,month) %>% 
+  summarise(average_ride_distance = mean(ride_distance),.groups = "drop")%>% 
+  arrange(member_casual, month)
+ggplot(data = trip_2022_visual)+
+  geom_col(mapping= aes(x=  month , y = average_ride_distance, fill = member_casual),position = "dodge")+
+  labs(title = "Average Ride Distance Vs Month : ",caption = 
+         "Done By Arun Kumar In Jan 2023")+
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+```
+##### **h) Average Ride  distance Of Members And Casual In Each                       Day Of The Week:**
+```{r}
+ trip_2022_visual = trip_2022_clean1 %>% 
+  group_by(member_casual, day_of_week) %>% 
+  summarise(average_ride_distance = mean(ride_distance),.groups = "drop")%>% 
+  arrange(member_casual,  day_of_week)
+ggplot(data = trip_2022_visual)+
+  geom_col(mapping= aes(x=  day_of_week, y = average_ride_distance, fill = member_casual),position = "dodge")+
+  labs(title = "Average Ride Distance Vs Day Of Week : ",caption = 
+         "Done By Arun Kumar In Jan 2023")+
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+```
+##### **i)Total Number Of Rides By Members And Casual In Each Hour Of The            Day:**
+```{r}
+trip_2022_clean1$hour = hour(trip_2022_clean1$started_at)
+```
+
+```{r}
+trip_2022_visual = trip_2022_clean1 %>% 
+  group_by(member_casual,hour) %>% 
+  summarise(no_of_rides = n(),.groups = "drop") %>% 
+  arrange(member_casual,hour)
+ggplot(data = trip_2022_visual)+
+  geom_point(mapping =  aes(x = hour ,y = no_of_rides,  fill = "black"),position = "dodge")+
+  geom_line(mapping =  aes(x = hour ,y = no_of_rides,color = member_casual),position = "dodge")+
+  labs(title = "Total No Of Rides By Casuals And Members Vs Hour:",caption = 
+         "Done By Arun Kumar In Jan 2023")+   
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+```
+
+##### **j) Mean Ride Distance In Each Hour Of The Day:**
+```{r}
+trip_2022_visual = trip_2022_clean1 %>% 
+  group_by(member_casual,hour) %>% 
+  summarise(mean_ride_distance =  mean(ride_distance)) %>% 
+  arrange(member_casual,hour)
+ggplot(data = trip_2022_visual)+
+  geom_point(mapping = aes(x = hour  , y  = mean_ride_distance, fill = "black"),position = "dodge")+
+  geom_line(mapping = aes(x = hour , y = mean_ride_distance , color = member_casual),position = "dodge")+
+  labs(title = "Mean Ride Distance Vs Hour : ",caption = 
+         "Done By Arun Kumar In Jan 2023")+
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+```
+##### **k) Mean Ride Duration In Each Hour Of The Day:**
+```{r}
+trip_2022_visual = trip_2022_clean1 %>% 
+  group_by(member_casual,hour) %>% 
+  summarise(mean_ride_duration = mean(ride_duration),.groups = "drop") %>% 
+  arrange(member_casual,hour)
+ggplot(data = trip_2022_visual)+
+  geom_point(mapping = aes(x = hour  , y  = mean_ride_duration, fill = "black"),position = "dodge")+
+  geom_line(mapping = aes(x = hour , y = mean_ride_duration , color = member_casual),position = "dodge")+
+  labs(title = "Mean Ride Duration Vs  Hour : ",caption = 
+         "Done By Arun Kumar In Jan 2023")+
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+```
+##### **l)Total Number Of Rides By Members And Casual In Each Type of                Bike:**
+```{r}
+trip_2022_visual =  trip_2022_clean1 %>% 
+  group_by(member_casual,rideable_type,month) %>% 
+  summarise(no_of_rides = n(),.groups = "drop") %>% 
+  arrange(member_casual,month)
+ggplot(data = trip_2022_visual)+
+  geom_col(mapping = aes(x = rideable_type , y = no_of_rides, fill = member_casual),position = "dodge")+
+  labs(title = "Total Number Of Rides Vs Type Of Bike:",caption = 
+         "Done By Arun Kumar In Jan 2023")+
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+```
+##### **m) Mean Ride Distance Of Each Type of Bike By Casuals And Member:**
+
+```{r}
+trip_2022_visual =  trip_2022_clean1 %>% 
+  group_by(member_casual,rideable_type,month) %>% 
+  summarise(mean_ride_distance =  mean(ride_distance)) %>% 
+  arrange(member_casual,month)
+ggplot(data = trip_2022_visual)+
+  geom_col(mapping = aes(x = rideable_type , y = mean_ride_distance, fill = member_casual),position = "dodge")+
+  labs(title = "Mean Ride Distance Vs Type Of Bike:",caption = 
+         "Done By Arun Kumar In Jan 2023")+
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+```
+##### **n) Mean Ride Duration Of Each Type of Bike By Casuals And Member:**
+
+```{r}
+trip_2022_visual =  trip_2022_clean1 %>% 
+  group_by(member_casual,rideable_type,month) %>% 
+  summarise(mean_ride_duration =  mean(ride_duration)) %>% 
+  arrange(member_casual,month)
+ggplot(data = trip_2022_visual)+
+  geom_col(mapping = aes(x = rideable_type, y = mean_ride_duration, fill = member_casual),position = "dodge")+
+  labs(title = "Mean Ride Duration Vs Type Of Bike:",caption = 
+         "Done By Arun Kumar In Jan 2023")+
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+```
+##### **o) Total Number Of Rides By Each Type Of Bike In Each Month By                Casuals And Members:**
+
+```{r}
+trip_2022_visual =  trip_2022_clean1 %>% 
+  group_by(member_casual,rideable_type,month) %>% 
+  summarise(no_of_rides  = n(),.groups = "drop") %>% 
+  arrange(member_casual,month)
+ggplot(data = trip_2022_visual)+
+  geom_col(mapping = aes(x = month, y = no_of_rides , fill = rideable_type ),position = "dodge")+
+  facet_wrap(~member_casual)+
+  labs(title = "Total Number Of Rides In Each Month Vs Type Of Bike :",caption = 
+         "Done By Arun Kumar In Jan 2023")+
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+```
+##### **p) Total Number Of Rides By Each Type Of Bike In Each Hour Of The             Day By Casuals And Members:**
+
+```{r}
+trip_2022_visual = trip_2022_clean1 %>% 
+  group_by(member_casual,rideable_type,hour) %>% 
+  summarise( no_of_rides= n(),.groups = "drop") %>% 
+  arrange(member_casual,rideable_type,hour)
+ggplot(data = trip_2022_visual)+
+  geom_point(mapping = aes(x = hour , y = no_of_rides , color =  rideable_type),position = "dodge")+
+  geom_line(mapping = aes(x = hour , y = no_of_rides , color =  rideable_type),position = "dodge" )+
+  facet_wrap(~ member_casual)+
+  labs(title = "Total Number Of Rides In Each Hour Of The Day Vs Type Of Bike ",caption = 
+         "Done By Arun Kumar In Jan 2023")+
+  scale_y_continuous(labels = function(x)format(x, scientific = FALSE)) 
+  
+```
+##### **5) ACT :**
+
+<br>
+
+* **FINDINGS OF MY ANALYSIS:**
+    + Members Ride More No Of Times Than Casuals .
+    + Mean  Ride Distance Was Almost Same For Both Casuals And Members
+    + Mean Ride Duration Of Casuals Was More Than The Members.
+    + In Weekdays Members Ride More Than The Casuals And In Weekends Almost
+      Both Are Same.
+    + Casuals And Members Rides More In Summer Season Which Is Late April        To Late October And There Was Hardly No Rides In Winter By Casuals         And Members.
+    + When It Comes To Spring And Fall There Was An Fair Not Of Rides By         Members But Casuals Rides Significantly Lesser No Of Rides In Late         Fall And Early Spring.
+    + Docked Bikes Are Only Used By Casuals Not By Members.
+    + Casuals Have Higher Mean Ride Distance  And Mean Ride Duration Than        members especially in Morning 10.00 To 11.00 Am And  Evening 5.00 To       6.00 Pm.
+    + Members Have Higher Frequency Of Rides In Every Hour Of The Day  Than       Casuals.
+    + Number Of Rides By Members Around Morning 8.00 Am And  Around Evening       5.00 Pm  Was At The Peak.
+
+* **RECOMENDATIONS:**
+    + As Casuals Are Riding Good No Of Rides In Weekends We Can Give The         Weekend Offers For Membership. So They Can Buy Membership For Their        Benefits.
+    + As Casuals Are Riding Significant No Of Rides , Higher Mean Ride D         Distance And Higher Mean Ride Duration Between 7.30 Am To 5.00 Pm.
+      So For Membership We Can Give Cashback Points And Other Benefits           Like Peak Hour Offer For Riding Between 8.00 Am To 5.00 Pm So That         They Can Make Use Of It .
+    + We Can Give Welcome Offer In Summer As Casuals And Members Giving          Head To Head Fight.
+    + We Can Give Additional Discount For Docked Bikes For Membership            Because Docked Bikes Are Only Used By Casuals So They Can Make Use Of       It.
+    + **Note:** 
+        + Offers Can Be Cash Discount , Redeem Points For Using them                 next time for Our Bikes And Also Fitness Friendly Gifts.
+
+    
+ 
+
+
+
